@@ -33,6 +33,9 @@
               500: '#6366f1',
               600: '#4f46e5',
               900: '#312e81'
+            },
+            slate: {
+              850: '#172033'
             }
           }
         }
@@ -62,23 +65,12 @@
         <!-- 高度狀態卡片 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between flex-1 relative">
           <div class="flex justify-between items-start">
-            <div>
-              <div class="text-slate-500 text-xs font-bold tracking-wide">當前高度</div>
-              <!-- 坐/站 狀態徽章 -->
-              <div id="status-badge" class="mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-950 text-indigo-400 border border-indigo-900">
-                <i data-lucide="accessibility" class="w-3 h-3"></i>
-                <span id="status-text">坐姿模式</span>
-              </div>
-            </div>
+            <div class="text-slate-500 text-xs font-bold tracking-wide">當前高度</div>
 
-            <!-- 連線狀態小圓點 (點擊嘗試重新連線) + ⚙ 按鈕 (切換到 Settings 視圖) -->
-            <div class="flex items-center gap-2">
-              <button id="dot-connect-btn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-850 border border-slate-800" title="連線狀態 (點擊重新連線)">
-                <span id="status-dot" class="block w-3 h-3 rounded-full bg-rose-500"></span>
-              </button>
-              <button onclick="switchView('settings')" class="w-10 h-10 flex items-center justify-center bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl transition-colors border border-slate-800" title="前往設定">
-                <i data-lucide="settings" class="w-5 h-5"></i>
-              </button>
+            <!-- 坐/站 狀態徽章 -->
+            <div id="status-badge" class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-950 text-indigo-400 border border-indigo-900">
+              <i data-lucide="accessibility" class="w-3 h-3"></i>
+              <span id="status-text">坐姿模式</span>
             </div>
           </div>
 
@@ -103,7 +95,7 @@
             oncontextmenu="return false;"
           >
             <i data-lucide="chevron-down" class="w-5 h-5"></i>
-            <span>▼ 下降</span>
+            <span>下降</span>
           </button>
 
           <!-- 升起按鈕 -->
@@ -113,7 +105,7 @@
             oncontextmenu="return false;"
           >
             <i data-lucide="chevron-up" class="w-5 h-5"></i>
-            <span>▲ 升起</span>
+            <span>升起</span>
           </button>
         </div>
 
@@ -121,17 +113,14 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 flex flex-col justify-between">
           <span class="text-slate-500 text-xs font-bold block mb-2 tracking-wide">預設高度</span>
           <div class="grid grid-cols-3 gap-2">
-            <button data-button="M1" class="preset-recall group flex flex-col items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
+            <button data-button="M1" class="preset-recall flex items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
               <span class="text-xs text-slate-200 font-extrabold">M1</span>
-              <span class="text-[9px] text-slate-500 font-semibold mt-0.5">坐姿</span>
             </button>
-            <button data-button="M2" class="preset-recall group flex flex-col items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
+            <button data-button="M2" class="preset-recall flex items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
               <span class="text-xs text-slate-200 font-extrabold">M2</span>
-              <span class="text-[9px] text-slate-500 font-semibold mt-0.5">中平</span>
             </button>
-            <button data-button="M3" class="preset-recall group flex flex-col items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
+            <button data-button="M3" class="preset-recall flex items-center justify-center py-3.5 rounded-xl bg-slate-850 border border-slate-800 hover:bg-brand-600 hover:border-brand-500 active:scale-95 transition-all duration-100">
               <span class="text-xs text-slate-200 font-extrabold">M3</span>
-              <span class="text-[9px] text-slate-500 font-semibold mt-0.5">站姿</span>
             </button>
           </div>
         </div>
@@ -149,30 +138,22 @@
                 <span class="text-xs font-bold tracking-wide">坐站排程</span>
               </div>
 
-              <!-- Switch 觸控開關 -->
-              <label class="relative inline-flex items-center cursor-pointer p-1">
-                <input type="checkbox" id="schedule-toggle" class="sr-only peer">
-                <div class="w-10 h-5 bg-slate-850 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[6px] after:left-[6px] after:bg-slate-400 after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-brand-500 peer-checked:after:bg-white"></div>
-              </label>
-            </div>
+              <div class="flex items-center gap-2">
+                <!-- Switch 觸控開關 -->
+                <label class="inline-flex items-center cursor-pointer p-1">
+                  <input type="checkbox" id="schedule-toggle" class="sr-only peer">
+                  <div class="relative w-12 h-7 bg-slate-850 border border-slate-700 rounded-full transition-colors peer-checked:bg-brand-500 peer-checked:border-brand-500 after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:h-5 after:w-5 after:bg-slate-400 after:rounded-full after:transition-all peer-checked:after:translate-x-5 peer-checked:after:bg-white"></div>
+                </label>
 
-            <!-- 倒數時鐘/狀態 -->
-            <div id="schedule-dashboard" class="mb-4 p-4 bg-slate-950 rounded-xl border border-slate-850 flex items-center justify-between opacity-40 transition-opacity">
-              <div class="flex items-center gap-3">
-                <div class="relative w-8 h-8 flex items-center justify-center">
-                  <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <path class="text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    <path id="timer-progress" class="text-brand-500 transition-all duration-1000" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  </svg>
-                  <i data-lucide="timer" class="w-3.5 h-3.5 absolute text-slate-400"></i>
-                </div>
-                <div>
-                  <div class="text-[10px] text-slate-500 font-bold">排程倒數 (預估)</div>
-                  <div class="text-xs font-bold tracking-wider text-slate-300" id="schedule-status-text">未啟用</div>
-                </div>
-              </div>
-              <div class="text-right">
-                <span id="countdown-timer" class="digital-font text-xl font-bold text-slate-200">--:--</span>
+                <!-- 連線狀態小圓點 (點擊嘗試重新連線) -->
+                <button id="dot-connect-btn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-850 border border-slate-800" title="連線狀態 (點擊重新連線)">
+                  <span id="status-dot" class="block w-3 h-3 rounded-full bg-rose-500"></span>
+                </button>
+
+                <!-- ⚙ 按鈕 (切換到 Settings 視圖)，放在螢幕右側方便單手觸控 -->
+                <button onclick="switchView('settings')" class="w-10 h-10 flex items-center justify-center bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl transition-colors border border-slate-800" title="前往設定">
+                  <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
               </div>
             </div>
 
@@ -235,20 +216,9 @@
 
         <!-- Height Threshold 卡片 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between flex-1 relative">
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="text-slate-400 text-xs font-bold tracking-wide">高度臨界值設定</div>
-              <span class="text-[9px] text-slate-500">判定坐姿或站姿的基準高度</span>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <!-- 連線狀態小圓點 -->
-              <span id="settings-status-dot" class="block w-3 h-3 rounded-full bg-rose-500"></span>
-              <!-- ← 按鈕 (切回 Control) -->
-              <button onclick="switchView('control')" class="w-10 h-10 flex items-center justify-center bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 transition-colors" title="返回主控">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-              </button>
-            </div>
+          <div>
+            <div class="text-slate-400 text-xs font-bold tracking-wide">高度臨界值設定</div>
+            <span class="text-[9px] text-slate-500">判定坐姿或站姿的基準高度</span>
           </div>
 
           <!-- Threshold 滑桿控制 -->
@@ -300,7 +270,20 @@
 
         <!-- Connection 模組 -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between flex-1">
-          <span class="text-slate-400 text-xs font-bold block tracking-wide mb-3">連線配置</span>
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-slate-400 text-xs font-bold tracking-wide">連線配置</span>
+
+            <div class="flex items-center gap-2">
+              <!-- 連線狀態小圓點 (點擊嘗試重新連線)，樣式與主控視圖一致 -->
+              <button id="settings-dot-connect-btn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-850 border border-slate-800" title="連線狀態 (點擊重新連線)">
+                <span id="settings-status-dot" class="block w-3 h-3 rounded-full bg-rose-500"></span>
+              </button>
+              <!-- ← 按鈕 (切回 Control)，放在螢幕右側方便單手觸控 -->
+              <button onclick="switchView('control')" class="w-10 h-10 flex items-center justify-center bg-slate-850 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl border border-slate-800 transition-colors" title="返回主控">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
 
           <div class="space-y-3 flex-1 flex flex-col justify-center">
             <!-- Desk Address -->

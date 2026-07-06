@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "smartdesk-shell-v1";
+const CACHE_NAME = "smartdesk-shell-v2";
 
 const APP_SHELL = [
   "./",
@@ -49,6 +49,26 @@ self.addEventListener("fetch", (event) => {
   // REST endpoints) — those must always go straight to the network.
   if (!isSameOrigin && !isWhitelistedCdn) return;
 
+  if (isSameOrigin) {
+    // Network-first for our own app shell: this app controls physical
+    // hardware, so a shipped fix must show up on next load whenever the
+    // device is online. Cache is only a fallback for offline use.
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first (stale-while-revalidate) for the rarely-changing CDN assets
+  // (fonts/Tailwind/Lucide) — fast load, refreshed in the background.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)

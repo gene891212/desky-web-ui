@@ -67,10 +67,6 @@ const sitTimeDisplay = el("sit-time-display");
 const standTimeSlider = el("stand-time-slider");
 const standTimeDisplay = el("stand-time-display");
 const scheduleToggle = el("schedule-toggle");
-const scheduleDashboard = el("schedule-dashboard");
-const scheduleStatusText = el("schedule-status-text");
-const countdownTimer = el("countdown-timer");
-const timerProgress = el("timer-progress");
 
 // --- misc UI helpers ---------------------------------------------------------
 
@@ -114,38 +110,24 @@ function isEditing(input) {
   return document.activeElement === input;
 }
 
-let lastIsSitting = undefined;
-let lastSittingTime = undefined;
-let lastStandingTime = undefined;
-
 function handleState(data) {
   switch (data.id) {
     case "sensor-desk_height":
       heightDisplay.textContent = data.value.toFixed(1);
       break;
 
-    case "binary_sensor-is_sitting": {
-      const isSitting = !!data.value;
-      if (isSitting) {
+    case "binary_sensor-is_sitting":
+      if (data.value) {
         statusText.textContent = "坐姿模式";
-        statusBadge.className = "mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-400 border border-indigo-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-400 border border-indigo-900";
       } else {
         statusText.textContent = "站姿模式";
-        statusBadge.className = "mt-1.5 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
       }
-      // The desk firmware restarts the sit/stand timer whenever this flips
-      // (manual height change past the threshold, or a memory recall), so
-      // mirror that here to keep the estimated countdown in sync.
-      if (lastIsSitting !== undefined && lastIsSitting !== isSitting) {
-        restartLocalSchedule(isSitting);
-      }
-      lastIsSitting = isSitting;
       break;
-    }
 
     case "switch-work":
       if (!isEditing(scheduleToggle)) scheduleToggle.checked = !!data.value;
-      setScheduleEnabled(!!data.value);
       break;
 
     case "number-stand_and_sit_height_threshold":
@@ -156,19 +138,11 @@ function handleState(data) {
     case "number-sitting_time":
       if (!isEditing(sitTimeSlider)) sitTimeSlider.value = data.value;
       sitTimeDisplay.textContent = `${data.value} 分`;
-      if (lastSittingTime !== undefined && lastSittingTime !== data.value) {
-        restartLocalSchedule(lastIsSitting);
-      }
-      lastSittingTime = data.value;
       break;
 
     case "number-standing_time":
       if (!isEditing(standTimeSlider)) standTimeSlider.value = data.value;
       standTimeDisplay.textContent = `${data.value} 分`;
-      if (lastStandingTime !== undefined && lastStandingTime !== data.value) {
-        restartLocalSchedule(lastIsSitting);
-      }
-      lastStandingTime = data.value;
       break;
   }
 }
@@ -319,62 +293,6 @@ standTimeSlider.addEventListener("input", () => {
   setStandingTime(standTimeSlider.value);
 });
 
-// --- local schedule countdown (estimated, mirrors the desk's own timer) -----
-// The ESPHome firmware doesn't expose a remaining-time sensor, so we estimate
-// it client-side and resync whenever is_sitting / sitting_time / standing_time
-// change (the same triggers that make the firmware restart its own timer).
-
-let scheduleEnabled = false;
-let schedulePhase = "sit";
-let scheduleRemaining = 0;
-let scheduleInterval = null;
-
-function currentPhaseTotalSeconds() {
-  const mins = schedulePhase === "sit" ? Number(sitTimeSlider.value) : Number(standTimeSlider.value);
-  return mins * 60;
-}
-
-function setScheduleEnabled(enabled) {
-  scheduleEnabled = enabled;
-  if (enabled) {
-    scheduleDashboard.classList.remove("opacity-40");
-    restartLocalSchedule(lastIsSitting !== undefined ? lastIsSitting : true);
-    if (!scheduleInterval) scheduleInterval = setInterval(tickSchedule, 1000);
-  } else {
-    scheduleDashboard.classList.add("opacity-40");
-    if (scheduleInterval) {
-      clearInterval(scheduleInterval);
-      scheduleInterval = null;
-    }
-    countdownTimer.textContent = "--:--";
-    scheduleStatusText.textContent = "未啟用";
-    timerProgress.setAttribute("stroke-dasharray", "0, 100");
-  }
-}
-
-function restartLocalSchedule(isSitting) {
-  schedulePhase = isSitting ? "sit" : "stand";
-  scheduleRemaining = currentPhaseTotalSeconds();
-  renderSchedule();
-}
-
-function tickSchedule() {
-  if (!scheduleEnabled) return;
-  scheduleRemaining = Math.max(0, scheduleRemaining - 1);
-  renderSchedule();
-}
-
-function renderSchedule() {
-  const total = currentPhaseTotalSeconds();
-  const progressPercent = total > 0 ? ((total - scheduleRemaining) / total) * 100 : 0;
-  timerProgress.setAttribute("stroke-dasharray", `${progressPercent}, 100`);
-
-  const mins = Math.floor(scheduleRemaining / 60);
-  const secs = scheduleRemaining % 60;
-  countdownTimer.textContent = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  scheduleStatusText.textContent = schedulePhase === "sit" ? "坐姿中" : "站姿中";
-}
-
 // --- view toggle (control <-> settings) --------------------------------------
 
 const controlView = el("control-view");
@@ -393,10 +311,12 @@ function switchView(viewName) {
 }
 window.switchView = switchView;
 
-el("dot-connect-btn").addEventListener("click", () => {
-  triggerVibration(20);
-  showToast("正在嘗試重新連線...", "info");
-  connect();
+["dot-connect-btn", "settings-dot-connect-btn"].forEach((id) => {
+  el(id).addEventListener("click", () => {
+    triggerVibration(20);
+    showToast("正在嘗試重新連線...", "info");
+    connect();
+  });
 });
 
 // --- settings panel -----------------------------------------------------------
@@ -423,9 +343,15 @@ window.addEventListener("load", () => {
   lucide.createIcons();
   connect();
 
+  // Service worker registration is disabled during development so edits show
+  // up immediately. Also unregister any previously installed SW and drop its
+  // caches. Re-enable by swapping this back to navigator.serviceWorker.register("sw.js").
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {
-      // offline/PWA support is best-effort; ignore registration failures
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      regs.forEach((reg) => reg.unregister());
     });
+    if (window.caches) {
+      caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+    }
   }
 });
