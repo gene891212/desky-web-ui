@@ -56,9 +56,14 @@ const heightDisplay = el("height-display");
 const statusBadge = el("status-badge");
 const statusText = el("status-text");
 const movingIndicator = el("moving-speed-indicator");
+const heightHistoryLine = el("height-history-line");
+const heightHistoryDot = el("height-history-dot");
 
 const statusDot = el("status-dot");
 const settingsStatusDot = el("settings-status-dot");
+const settingsStatusText = el("settings-status-text");
+const settingsHeightDisplay = el("settings-height-display");
+const settingsStatusBadge = el("settings-status-badge");
 
 const thresholdSlider = el("threshold-slider");
 const thresholdValDisplay = el("threshold-val-display");
@@ -110,19 +115,154 @@ function isEditing(input) {
   return document.activeElement === input;
 }
 
+const heightHistoryLimit = 300;
+const heightHistory = Array(heightHistoryLimit).fill(null);
+let lastPushTime = 0;
+
+function getBezierPath(points) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x.toFixed(2)},${points[0].y.toFixed(2)}`;
+  
+  let d = `M ${points[0].x.toFixed(2)},${points[0].y.toFixed(2)}`;
+  if (points.length === 2) {
+    d += ` L ${points[1].x.toFixed(2)},${points[1].y.toFixed(2)}`;
+    return d;
+  }
+  
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    
+    d += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+
+function smoothPoints(points, windowSize = 5) {
+  if (points.length <= windowSize) return points;
+  const smoothed = [];
+  const half = Math.floor(windowSize / 2);
+  
+  for (let i = 0; i < points.length; i++) {
+    let sumX = 0;
+    let sumY = 0;
+    let count = 0;
+    
+    for (let w = -half; w <= half; w++) {
+      const idx = i + w;
+      if (idx >= 0 && idx < points.length) {
+        sumX += points[idx].x;
+        sumY += points[idx].y;
+        count++;
+      }
+    }
+    smoothed.push({ x: sumX / count, y: sumY / count });
+  }
+  return smoothed;
+}
+
+function updateHeightHistory(value) {
+  if (!heightHistoryLine || !Number.isFinite(value)) return;
+
+  const now = Date.now();
+  const lastVal = heightHistory[heightHistory.length - 1];
+  const values = heightHistory.filter(Number.isFinite);
+
+  if (values.length === 0) {
+    heightHistory.fill(value);
+    lastPushTime = now;
+  } else if (value !== lastVal && now - lastPushTime > 800) {
+    heightHistory.push(value);
+    if (heightHistory.length > heightHistoryLimit) heightHistory.shift();
+    lastPushTime = now;
+  } else {
+    // Real-time update of the last point
+    heightHistory[heightHistory.length - 1] = value;
+  }
+
+  const heightHistoryArea = el("height-history-area");
+  if (values.length <= 1) {
+    heightHistoryLine.setAttribute("d", "M 0,50 L 100,50");
+    if (heightHistoryArea) heightHistoryArea.setAttribute("d", "M 0,50 L 100,50 L 100,100 L 0,100 Z");
+    return;
+  }
+
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(max - min, 1.5);
+  const isFlat = max === min;
+  const points = heightHistory.map((height, index) => {
+    if (!Number.isFinite(height)) return null;
+
+    const x = (index / (heightHistoryLimit - 1)) * 100;
+    const y = isFlat ? 50 : 90 - ((height - min) / range) * 80;
+    return { x, y };
+  }).filter(Boolean);
+
+  const lastPoint = points[points.length - 1];
+  const smoothed = smoothPoints(points, 5);
+  const pathD = getBezierPath(smoothed);
+
+  heightHistoryLine.setAttribute("d", pathD);
+  if (heightHistoryArea) {
+    const firstX = smoothed[0].x;
+    const lastX = smoothed[smoothed.length - 1].x;
+    const areaD = pathD + ` L ${lastX.toFixed(2)},100 L ${firstX.toFixed(2)},100 Z`;
+    heightHistoryArea.setAttribute("d", areaD);
+  }
+  if (heightHistoryDot) {
+    heightHistoryDot.setAttribute("cx", lastPoint.x.toFixed(2));
+    heightHistoryDot.setAttribute("cy", lastPoint.y.toFixed(2));
+  }
+}
+
+// 定時補點：每 5 秒將當前高度補入歷史，填補靜止期間的空白
+setInterval(() => {
+  const currentHeight = parseFloat(heightDisplay.textContent);
+  if (!Number.isFinite(currentHeight)) return;
+
+  heightHistory.push(currentHeight);
+  if (heightHistory.length > heightHistoryLimit) heightHistory.shift();
+  lastPushTime = Date.now();
+  updateHeightHistory(currentHeight);
+}, 4 * 60 * 1000);
+
 function handleState(data) {
   switch (data.id) {
     case "sensor-desk_height":
-      heightDisplay.textContent = data.value.toFixed(1);
+      {
+        const height = Number(data.value);
+        if (Number.isFinite(height)) {
+          heightDisplay.textContent = height.toFixed(1);
+          if (settingsHeightDisplay) settingsHeightDisplay.textContent = height.toFixed(1);
+          updateHeightHistory(height);
+        }
+      }
       break;
 
     case "binary_sensor-is_sitting":
       if (data.value) {
         statusText.textContent = "坐姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-400 border border-indigo-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-900";
+        if (settingsStatusBadge) {
+          settingsStatusBadge.textContent = "坐姿";
+          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-950 text-indigo-400 border border-indigo-900";
+        }
       } else {
         statusText.textContent = "站姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
+        if (settingsStatusBadge) {
+          settingsStatusBadge.textContent = "站姿";
+          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-900";
+        }
       }
       break;
 
@@ -137,12 +277,12 @@ function handleState(data) {
 
     case "number-sitting_time":
       if (!isEditing(sitTimeSlider)) sitTimeSlider.value = data.value;
-      sitTimeDisplay.textContent = `${data.value} 分`;
+      sitTimeDisplay.textContent = data.value;
       break;
 
     case "number-standing_time":
       if (!isEditing(standTimeSlider)) standTimeSlider.value = data.value;
-      standTimeDisplay.textContent = `${data.value} 分`;
+      standTimeDisplay.textContent = data.value;
       break;
   }
 }
@@ -153,9 +293,20 @@ let source = null;
 let reconnectTimer = null;
 
 function setConnected(connected) {
-  const dotClass = connected ? "block w-3 h-3 rounded-full bg-emerald-500" : "block w-3 h-3 rounded-full bg-rose-500";
-  statusDot.className = dotClass;
-  settingsStatusDot.className = dotClass;
+  if (statusDot) {
+    statusDot.className = connected ? "block w-3 h-3 rounded-full bg-emerald-500" : "block w-3 h-3 rounded-full bg-rose-500";
+  }
+  if (settingsStatusDot) {
+    settingsStatusDot.className = connected 
+      ? "block w-2.5 h-2.5 rounded-full bg-emerald-500" 
+      : "block w-2.5 h-2.5 rounded-full bg-rose-500";
+  }
+  if (settingsStatusText) {
+    settingsStatusText.textContent = connected ? "已連線" : "未連線";
+    settingsStatusText.className = connected 
+      ? "text-xs font-bold text-emerald-500" 
+      : "text-xs font-bold text-rose-500";
+  }
 }
 
 function connect() {
@@ -186,9 +337,10 @@ function connect() {
 // --- move buttons (Raise / Lower switches) -----------------------------------
 
 function setMoving(direction) {
+  if (!movingIndicator) return;
   if (direction) {
     movingIndicator.textContent = direction === "up" ? "上升中" : "下降中";
-    movingIndicator.className = "text-right text-[10px] text-indigo-400 font-extrabold";
+    movingIndicator.className = "text-right text-[10px] text-indigo-400 font-bold";
   } else {
     movingIndicator.textContent = "靜止";
     movingIndicator.className = "text-right text-[10px] text-slate-500 font-bold";
@@ -228,11 +380,12 @@ wireHoldButton("btn-lower", "Lower Desk", "down");
 // --- preset / memory buttons --------------------------------------------------
 
 document.querySelectorAll(".preset-recall").forEach((btn) => {
+  // 觸碰按下的一瞬間立刻震動，提升即時感
+  btn.addEventListener("pointerdown", () => triggerVibration(30));
   btn.addEventListener("click", async () => {
-    triggerVibration(40);
     try {
       await pressButton(btn.dataset.button);
-      showToast(`已發送移動至預設 ${btn.dataset.button} 的指令`, "success");
+      showToast(`移動至 ${btn.dataset.button}`, "info");
     } catch {
       showToast("發送失敗，請檢查連線", "error");
     }
@@ -240,29 +393,34 @@ document.querySelectorAll(".preset-recall").forEach((btn) => {
 });
 
 document.querySelectorAll(".ghost-save-btn").forEach((btn) => {
+  // 觸碰按下的一瞬間立刻震動
+  btn.addEventListener("pointerdown", () => triggerVibration(30));
   btn.addEventListener("click", async () => {
-    triggerVibration(40);
     try {
       await pressButton(btn.dataset.button);
-      showToast("已成功將目前高度儲存至記憶體", "success");
+      showToast("已成功將目前高度儲存至記憶體", "info");
     } catch {
       showToast("儲存失敗，請檢查連線", "error");
     }
   });
 });
 
+el("btn-request").addEventListener("pointerdown", () => {
+  if (!cfg.host) {
+    triggerVibration([50, 50]);
+  } else {
+    triggerVibration(30);
+  }
+});
 el("btn-request").addEventListener("click", async () => {
   if (!cfg.host) {
     showToast("發送失敗：請先設定連線位址", "error");
-    triggerVibration([50, 50]);
     return;
   }
-  triggerVibration(30);
-  showToast("正在發送喚醒命令，要求回報即時高度...", "info");
   try {
     await pressButton("Request Desk Height");
     triggerVibration([40, 20]);
-    showToast("已發送高度回報請求", "success");
+    showToast("已發送高度回報請求", "info");
   } catch {
     showToast("發送失敗，請檢查連線", "error");
   }
@@ -272,7 +430,11 @@ el("btn-request").addEventListener("click", async () => {
 
 scheduleToggle.addEventListener("change", () => {
   triggerVibration(30);
-  setSwitch("Work", scheduleToggle.checked);
+  const state = scheduleToggle.checked;
+  showToast(`已${state ? "開啟" : "關閉"}坐站排程`, "info");
+  setSwitch("Work", state).catch(() => {
+    showToast("發送失敗，請檢查連線", "error");
+  });
 });
 
 const setThreshold = debounce((v) => setNumber("Stand and Sit Height Threshold", v), 300);
@@ -283,13 +445,13 @@ thresholdSlider.addEventListener("input", () => {
 
 const setSittingTime = debounce((v) => setNumber("Sitting Time", v), 300);
 sitTimeSlider.addEventListener("input", () => {
-  sitTimeDisplay.textContent = `${sitTimeSlider.value} 分`;
+  sitTimeDisplay.textContent = sitTimeSlider.value;
   setSittingTime(sitTimeSlider.value);
 });
 
 const setStandingTime = debounce((v) => setNumber("Standing Time", v), 300);
 standTimeSlider.addEventListener("input", () => {
-  standTimeDisplay.textContent = `${standTimeSlider.value} 分`;
+  standTimeDisplay.textContent = standTimeSlider.value;
   setStandingTime(standTimeSlider.value);
 });
 
@@ -312,11 +474,14 @@ function switchView(viewName) {
 window.switchView = switchView;
 
 ["dot-connect-btn", "settings-dot-connect-btn"].forEach((id) => {
-  el(id).addEventListener("click", () => {
-    triggerVibration(20);
-    showToast("正在嘗試重新連線...", "info");
-    connect();
-  });
+  const btn = el(id);
+  if (btn) {
+    btn.addEventListener("pointerdown", () => triggerVibration(20));
+    btn.addEventListener("click", () => {
+      showToast("正在嘗試重新連線...", "info");
+      connect();
+    });
+  }
 });
 
 // --- settings panel -----------------------------------------------------------
@@ -325,6 +490,7 @@ el("input-desk-address").value = cfg.host;
 el("input-username").value = cfg.user;
 el("input-password").value = cfg.pass;
 
+el("btn-save-settings").addEventListener("pointerdown", () => triggerVibration(30));
 el("btn-save-settings").addEventListener("click", () => {
   cfg.host = el("input-desk-address").value.trim();
   cfg.user = el("input-username").value.trim();
@@ -332,7 +498,6 @@ el("btn-save-settings").addEventListener("click", () => {
   localStorage.setItem("desky.host", cfg.host);
   localStorage.setItem("desky.user", cfg.user);
   localStorage.setItem("desky.pass", cfg.pass);
-  triggerVibration(30);
   showToast("設定已儲存，正在重新連線...", "info");
   connect();
 });
@@ -347,11 +512,14 @@ window.addEventListener("load", () => {
   // up immediately. Also unregister any previously installed SW and drop its
   // caches. Re-enable by swapping this back to navigator.serviceWorker.register("sw.js").
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then((regs) => {
-      regs.forEach((reg) => reg.unregister());
-    });
-    if (window.caches) {
-      caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
-    }
+    // navigator.serviceWorker.getRegistrations().then((regs) => {
+    //   regs.forEach((reg) => reg.unregister());
+    // });
+    // if (window.caches) {
+    //   caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+    // }
+    navigator.serviceWorker.register("sw.js")
+      .then((reg) => console.log("Service Worker 註冊成功", reg))
+      .catch((err) => console.warn("Service Worker 註冊失敗", err));
   }
 });

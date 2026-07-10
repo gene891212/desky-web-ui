@@ -4,7 +4,7 @@
   "description": "觸控優化的智慧升降桌控制面板",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#020617",
   "theme_color": "#020617",
