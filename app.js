@@ -48,12 +48,23 @@ function debounce(fn, delay) {
   };
 }
 
+// 依目前數值更新滑桿的已選取進度 (--fill CSS 變數)，讓軌道呈現填色效果
+function syncRangeFill(input) {
+  if (!input) return;
+  const min = Number(input.min) || 0;
+  const max = Number(input.max) || 100;
+  const val = Number(input.value);
+  const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
+  input.style.setProperty("--fill", `${Math.min(100, Math.max(0, pct))}%`);
+}
+
 // --- DOM refs ---------------------------------------------------------------
 
 const el = (id) => document.getElementById(id);
 
 const heightDisplay = el("height-display");
 const statusBadge = el("status-badge");
+const statusIconSlot = el("status-icon-slot");
 const statusText = el("status-text");
 const movingIndicator = el("moving-speed-indicator");
 const heightHistoryLine = el("height-history-line");
@@ -96,7 +107,7 @@ function showToast(message, type = "info") {
     toast.className += " bg-slate-900/95 text-slate-300 border-slate-800";
   }
 
-  const dotClass = type === "success" ? "bg-emerald-400" : type === "error" ? "bg-rose-400" : "bg-indigo-400";
+  const dotClass = type === "success" ? "bg-emerald-400" : type === "error" ? "bg-rose-400" : "bg-brand-400";
   toast.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span><span></span>`;
   toast.querySelector("span:last-child").textContent = message;
 
@@ -113,6 +124,12 @@ function showToast(message, type = "info") {
 
 function isEditing(input) {
   return document.activeElement === input;
+}
+
+function setStatusIcon(iconName) {
+  if (!statusIconSlot) return;
+  statusIconSlot.innerHTML = `<i data-lucide="${iconName}" class="w-3.5 h-3.5" stroke-width="1.75"></i>`;
+  lucide.createIcons();
 }
 
 const heightHistoryLimit = 300;
@@ -250,18 +267,20 @@ function handleState(data) {
 
     case "binary_sensor-is_sitting":
       if (data.value) {
+        setStatusIcon("accessibility");
         statusText.textContent = "坐姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-900/60";
         if (settingsStatusBadge) {
           settingsStatusBadge.textContent = "坐姿";
-          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-950 text-indigo-400 border border-indigo-900";
+          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-950 text-brand-400 border border-brand-900/60";
         }
       } else {
+        setStatusIcon("person-standing");
         statusText.textContent = "站姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
         if (settingsStatusBadge) {
           settingsStatusBadge.textContent = "站姿";
-          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-900";
+          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900";
         }
       }
       break;
@@ -271,17 +290,26 @@ function handleState(data) {
       break;
 
     case "number-stand_and_sit_height_threshold":
-      if (!isEditing(thresholdSlider)) thresholdSlider.value = data.value;
+      if (!isEditing(thresholdSlider)) {
+        thresholdSlider.value = data.value;
+        syncRangeFill(thresholdSlider);
+      }
       thresholdValDisplay.textContent = Number(data.value).toFixed(1);
       break;
 
     case "number-sitting_time":
-      if (!isEditing(sitTimeSlider)) sitTimeSlider.value = data.value;
+      if (!isEditing(sitTimeSlider)) {
+        sitTimeSlider.value = data.value;
+        syncRangeFill(sitTimeSlider);
+      }
       sitTimeDisplay.textContent = data.value;
       break;
 
     case "number-standing_time":
-      if (!isEditing(standTimeSlider)) standTimeSlider.value = data.value;
+      if (!isEditing(standTimeSlider)) {
+        standTimeSlider.value = data.value;
+        syncRangeFill(standTimeSlider);
+      }
       standTimeDisplay.textContent = data.value;
       break;
   }
@@ -294,11 +322,14 @@ let reconnectTimer = null;
 
 function setConnected(connected) {
   if (statusDot) {
-    statusDot.className = connected ? "block w-3 h-3 rounded-full bg-emerald-500" : "block w-3 h-3 rounded-full bg-rose-500";
+    // 用 classList 增減而非整串覆寫 className，避免蓋掉 switchView() 加上的 hidden class
+    statusDot.classList.remove("bg-emerald-500", "bg-rose-500", "status-live");
+    statusDot.classList.add(connected ? "bg-emerald-500" : "bg-rose-500");
+    if (connected) statusDot.classList.add("status-live");
   }
   if (settingsStatusDot) {
-    settingsStatusDot.className = connected 
-      ? "block w-2.5 h-2.5 rounded-full bg-emerald-500" 
+    settingsStatusDot.className = connected
+      ? "block w-2.5 h-2.5 rounded-full bg-emerald-500 status-live"
       : "block w-2.5 h-2.5 rounded-full bg-rose-500";
   }
   if (settingsStatusText) {
@@ -340,7 +371,7 @@ function setMoving(direction) {
   if (!movingIndicator) return;
   if (direction) {
     movingIndicator.textContent = direction === "up" ? "上升中" : "下降中";
-    movingIndicator.className = "text-right text-[10px] text-indigo-400 font-bold";
+    movingIndicator.className = "text-right text-[10px] text-brand-400 font-bold";
   } else {
     movingIndicator.textContent = "靜止";
     movingIndicator.className = "text-right text-[10px] text-slate-500 font-bold";
@@ -440,20 +471,25 @@ scheduleToggle.addEventListener("change", () => {
 const setThreshold = debounce((v) => setNumber("Stand and Sit Height Threshold", v), 300);
 thresholdSlider.addEventListener("input", () => {
   thresholdValDisplay.textContent = Number(thresholdSlider.value).toFixed(1);
+  syncRangeFill(thresholdSlider);
   setThreshold(thresholdSlider.value);
 });
 
 const setSittingTime = debounce((v) => setNumber("Sitting Time", v), 300);
 sitTimeSlider.addEventListener("input", () => {
   sitTimeDisplay.textContent = sitTimeSlider.value;
+  syncRangeFill(sitTimeSlider);
   setSittingTime(sitTimeSlider.value);
 });
 
 const setStandingTime = debounce((v) => setNumber("Standing Time", v), 300);
 standTimeSlider.addEventListener("input", () => {
   standTimeDisplay.textContent = standTimeSlider.value;
+  syncRangeFill(standTimeSlider);
   setStandingTime(standTimeSlider.value);
 });
+
+[thresholdSlider, sitTimeSlider, standTimeSlider].forEach(syncRangeFill);
 
 // --- view toggle (control <-> settings) --------------------------------------
 
@@ -465,9 +501,11 @@ function switchView(viewName) {
   if (viewName === "settings") {
     controlView.classList.add("hidden");
     settingsView.classList.remove("hidden");
+    if (statusDot) statusDot.classList.add("hidden");
   } else {
     settingsView.classList.add("hidden");
     controlView.classList.remove("hidden");
+    if (statusDot) statusDot.classList.remove("hidden");
   }
   setTimeout(() => lucide.createIcons(), 20);
 }

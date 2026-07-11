@@ -22,11 +22,75 @@ body {
 
 .digital-font {
   font-family: 'Orbitron', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 卡片容器：柔和圓角 + 內緣高光 + 帶色調的擴散陰影，取代單純平面邊框 */
+.panel-card {
+  background: #0f172a;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  border-radius: 1.5rem;
+  box-shadow:
+    inset 0 1px 0 rgba(148, 163, 184, 0.05),
+    0 24px 40px -28px rgba(2, 6, 23, 0.9);
 }
 
 .height-card {
   background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
-  box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(148, 163, 184, 0.06),
+    0 24px 40px -28px rgba(2, 6, 23, 0.9);
+}
+
+/* 主要動作按鈕：藍色調實色按鈕，取代純平面色塊 */
+.btn-accent {
+  background: linear-gradient(180deg, #3a93ff, #1c6fe0);
+  box-shadow: 0 12px 24px -12px rgba(47, 139, 255, 0.55);
+}
+.btn-accent:hover {
+  background: linear-gradient(180deg, #5da9ff, #2f8bff);
+}
+
+/* ------------------------------------------------------------------ */
+/* 進場動畫：畫面切換與卡片依序浮現                                    */
+/* ------------------------------------------------------------------ */
+
+@keyframes view-enter-kf {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.view-enter {
+  animation: view-enter-kf 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes card-enter-kf {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#control-view main > div,
+#settings-view main .panel-card {
+  animation: card-enter-kf 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#control-view main > div:nth-child(1) { animation-delay: 20ms; }
+#control-view main > div:nth-child(2) { animation-delay: 70ms; }
+#control-view main > div:nth-child(3) { animation-delay: 120ms; }
+
+#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(1) { animation-delay: 20ms; }
+#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(2) { animation-delay: 70ms; }
+#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(1) { animation-delay: 120ms; }
+#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(2) { animation-delay: 170ms; }
+
+/* 連線指示燈：連線時呼吸脈動，斷線時靜止 */
+@keyframes status-breathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+  50% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+}
+
+.status-live {
+  animation: status-breathe 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .height-card > * {
@@ -61,8 +125,8 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    repeating-linear-gradient(to bottom, transparent 0 18px, rgba(99, 102, 241, 0.08) 18px 19px),
-    repeating-linear-gradient(to right, transparent 0 28px, rgba(99, 102, 241, 0.04) 28px 29px);
+    repeating-linear-gradient(to bottom, transparent 0 18px, rgba(47, 139, 255, 0.07) 18px 19px),
+    repeating-linear-gradient(to right, transparent 0 28px, rgba(47, 139, 255, 0.04) 28px 29px);
   mask-image: linear-gradient(to right, transparent, black 8%, black 94%, transparent);
 }
 
@@ -88,7 +152,6 @@ body {
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 0 3px rgba(99, 102, 241, 0.4));
   transition: d 240ms ease;
 }
 
@@ -112,7 +175,7 @@ body {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 999px;
-  background: #4f46e5;
+  background: #1c6fe0;
 }
 
 /* 隱藏滾動條 */
@@ -127,22 +190,33 @@ body {
   }
 }
 
-/* 扁平化滑桿樣式，去除發光陰影 */
+/* 扁平化滑桿樣式，去除發光陰影，並以 --fill 顯示已選取進度 */
+input[type=range] {
+  --thumb-color: #2f8bff;
+  --fill: 0%;
+}
+input[type=range].range-brand { --thumb-color: #2f8bff; }
+input[type=range].range-emerald { --thumb-color: #10b981; }
+
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
   height: 20px;
   width: 20px;
   border-radius: 50%;
-  background: #6366f1;
+  background: var(--thumb-color);
   cursor: pointer;
   border: 2px solid #ffffff;
   margin-top: -7px;
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+input[type=range]:active::-webkit-slider-thumb {
+  transform: scale(1.08);
 }
 input[type=range]::-moz-range-thumb {
   height: 20px;
   width: 20px;
   border-radius: 50%;
-  background: #6366f1;
+  background: var(--thumb-color);
   cursor: pointer;
   border: 2px solid #ffffff;
 }
@@ -150,8 +224,8 @@ input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 6px;
   cursor: pointer;
-  background: #1e293b;
   border-radius: 3px;
+  background: linear-gradient(to right, var(--thumb-color) var(--fill), #1e293b var(--fill));
 }
 input[type=range]::-moz-range-track {
   width: 100%;
@@ -159,4 +233,9 @@ input[type=range]::-moz-range-track {
   cursor: pointer;
   background: #1e293b;
   border-radius: 3px;
+}
+input[type=range]::-moz-range-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--thumb-color);
 }
