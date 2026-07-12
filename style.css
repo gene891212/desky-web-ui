@@ -239,3 +239,31 @@ input[type=range]::-moz-range-progress {
   border-radius: 3px;
   background: var(--thumb-color);
 }
+
+/* 行動裝置橫置極窄螢幕優化 (當螢幕高度小於 400px 時，縮減外邊距與間距，以釋放空間給圖表，使其高度能維持在 5.0rem) */
+@media (max-height: 400px) {
+  /* 1. 縮減主畫面外邊距 */
+  body {
+    padding: 0.5rem !important; /* 原本是 1rem (p-4) */
+  }
+
+  /* 2. 縮減網格卡片之間的間距 */
+  #control-view main {
+    gap: 0.75rem !important; /* 原本是 1rem (gap-4) */
+  }
+
+  /* 3. 縮減卡片內部邊距 */
+  .panel-card, .height-card {
+    padding: 0.75rem !important; /* 原本是 1rem (p-4) */
+  }
+
+  /* 4. 縮小標題下方的間距 */
+  #control-view main .mb-3 {
+    margin-bottom: 0.5rem !important; /* 原本是 0.75rem (mb-3) */
+  }
+
+  /* 5. 圖表高度可以維持在較高的 5.0rem */
+  .height-record {
+    height: 5.0rem !important; /* 原本是 5.8rem，極限高度下壓縮至 5.0rem */
+  }
+}

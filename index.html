@@ -47,7 +47,7 @@
     }
   </script>
 </head>
-<body class="bg-slate-950 text-slate-100 h-screen w-screen p-4 select-none flex flex-col justify-between">
+<body class="bg-slate-950 text-slate-100 h-screen h-[100dvh] w-screen overflow-hidden p-4 select-none flex flex-col">
 
 
 
@@ -64,9 +64,9 @@
   <span id="status-dot" class="fixed top-3 right-3 z-40 block w-2 h-2 rounded-full bg-rose-500 pointer-events-none" aria-hidden="true"></span>
 
   <!-- ==================== VIEW 1: CONTROL (主控制視圖) ==================== -->
-  <div id="control-view" class="view-enter w-full h-full flex flex-col justify-between">
+  <div id="control-view" class="view-enter w-full flex-1 min-h-0 flex flex-col">
     <!-- 主控台網格佈局 (上排 2 欄 + 底部全寬控制列) -->
-    <main class="grid grid-cols-[3fr_2fr] grid-rows-[1fr_auto] gap-4 flex-1 w-full h-full overflow-hidden">
+    <main class="grid grid-cols-[3fr_2fr] grid-rows-[1fr_auto] gap-4 flex-1 min-h-0 w-full">
 
         <!-- 高度狀態卡片 -->
         <div class="height-card panel-card p-4 flex flex-col justify-between relative overflow-hidden">
@@ -231,7 +231,7 @@
 
 
   <!-- ==================== VIEW 2: SETTINGS (設定視圖) ==================== -->
-  <div id="settings-view" class="view-enter hidden w-full h-full flex flex-col justify-between">
+  <div id="settings-view" class="view-enter hidden w-full flex-1 min-h-0 flex flex-col">
     <!-- 設定頁面頂部導覽列 -->
     <div class="flex items-center justify-between mb-4">
       <button onclick="switchView('control')" class="flex items-center gap-2 text-slate-400 hover:text-white active:scale-[0.97] transition-all" title="返回主控">
@@ -247,7 +247,7 @@
       </div>
     </div>
 
-    <main class="flex-1 w-full h-full overflow-y-auto space-y-4 pb-3">
+    <main class="flex-1 min-h-0 w-full overflow-y-auto space-y-4 pb-3">
 
       <div class="grid grid-cols-[2fr_3fr] gap-4">
 
