@@ -2,9 +2,6 @@
 
 這是一個專為手機與平板橫置（Landscape）操作的智慧升降桌觸控主控台。透過與智慧升降桌節點（基於 ESPHome）連線，提供即時高度監控、手動升降、坐站排程管理與記憶鍵設定。
 
-![主控台主畫面](images/main.png)
-![設定與連線配置畫面](images/settings.png)
-
 ## 硬體與元件搭配需求
 
 本儀表板無法獨立運作，必須搭配 [custom-esphome-components](https://github.com/gene891212/custom-esphome-components) 專案中的 `desky` 元件的 ESP 晶片（如 ESP32/ESP8266）節點。

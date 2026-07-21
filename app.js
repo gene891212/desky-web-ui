@@ -86,7 +86,7 @@ const scheduleToggle = el("schedule-toggle");
 
 // --- misc UI helpers ---------------------------------------------------------
 
-function triggerVibration(duration = 15) {
+function triggerVibration(duration = 8) {
   if ("vibrate" in navigator) {
     navigator.vibrate(duration);
   }
@@ -269,7 +269,7 @@ function handleState(data) {
       if (data.value) {
         setStatusIcon("accessibility");
         statusText.textContent = "坐姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-900/60";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-brand-950 text-brand-400 border border-brand-900/60";
         if (settingsStatusBadge) {
           settingsStatusBadge.textContent = "坐姿";
           settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-950 text-brand-400 border border-brand-900/60";
@@ -277,10 +277,10 @@ function handleState(data) {
       } else {
         setStatusIcon("person-standing");
         statusText.textContent = "站姿模式";
-        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-900";
+        statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900/60";
         if (settingsStatusBadge) {
           settingsStatusBadge.textContent = "站姿";
-          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900";
+          settingsStatusBadge.className = "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-900/60";
         }
       }
       break;
@@ -387,7 +387,7 @@ function wireHoldButton(buttonId, entityName, direction) {
       showToast("無法操作：尚未設定連線位址", "error");
       return;
     }
-    triggerVibration(25);
+    triggerVibration(12);
     setMoving(direction);
     setSwitch(entityName, true);
   };
@@ -395,7 +395,7 @@ function wireHoldButton(buttonId, entityName, direction) {
   const stop = () => {
     setMoving(null);
     setSwitch(entityName, false);
-    triggerVibration(10);
+    triggerVibration(6);
   };
 
   btn.addEventListener("pointerdown", start);
@@ -412,7 +412,7 @@ wireHoldButton("btn-lower", "Lower Desk", "down");
 
 document.querySelectorAll(".preset-recall").forEach((btn) => {
   // 觸碰按下的一瞬間立刻震動，提升即時感
-  btn.addEventListener("pointerdown", () => triggerVibration(30));
+  btn.addEventListener("pointerdown", () => triggerVibration(12));
   btn.addEventListener("click", async () => {
     try {
       await pressButton(btn.dataset.button);
@@ -425,7 +425,7 @@ document.querySelectorAll(".preset-recall").forEach((btn) => {
 
 document.querySelectorAll(".ghost-save-btn").forEach((btn) => {
   // 觸碰按下的一瞬間立刻震動
-  btn.addEventListener("pointerdown", () => triggerVibration(30));
+  btn.addEventListener("pointerdown", () => triggerVibration(12));
   btn.addEventListener("click", async () => {
     try {
       await pressButton(btn.dataset.button);
@@ -438,9 +438,9 @@ document.querySelectorAll(".ghost-save-btn").forEach((btn) => {
 
 el("btn-request").addEventListener("pointerdown", () => {
   if (!cfg.host) {
-    triggerVibration([50, 50]);
+    triggerVibration([20, 30, 20]);
   } else {
-    triggerVibration(30);
+    triggerVibration(12);
   }
 });
 el("btn-request").addEventListener("click", async () => {
@@ -450,7 +450,7 @@ el("btn-request").addEventListener("click", async () => {
   }
   try {
     await pressButton("Request Desk Height");
-    triggerVibration([40, 20]);
+    triggerVibration([10, 20]);
     showToast("已發送高度回報請求", "info");
   } catch {
     showToast("發送失敗，請檢查連線", "error");
@@ -460,7 +460,7 @@ el("btn-request").addEventListener("click", async () => {
 // --- schedule switch & sliders ------------------------------------------------
 
 scheduleToggle.addEventListener("change", () => {
-  triggerVibration(30);
+  triggerVibration(12);
   const state = scheduleToggle.checked;
   showToast(`已${state ? "開啟" : "關閉"}坐站排程`, "info");
   setSwitch("Work", state).catch(() => {
@@ -497,7 +497,7 @@ const controlView = el("control-view");
 const settingsView = el("settings-view");
 
 function switchView(viewName) {
-  triggerVibration(20);
+  triggerVibration(8);
   if (viewName === "settings") {
     controlView.classList.add("hidden");
     settingsView.classList.remove("hidden");
@@ -514,7 +514,7 @@ window.switchView = switchView;
 ["dot-connect-btn", "settings-dot-connect-btn"].forEach((id) => {
   const btn = el(id);
   if (btn) {
-    btn.addEventListener("pointerdown", () => triggerVibration(20));
+    btn.addEventListener("pointerdown", () => triggerVibration(8));
     btn.addEventListener("click", () => {
       showToast("正在嘗試重新連線...", "info");
       connect();
@@ -528,7 +528,7 @@ el("input-desk-address").value = cfg.host;
 el("input-username").value = cfg.user;
 el("input-password").value = cfg.pass;
 
-el("btn-save-settings").addEventListener("pointerdown", () => triggerVibration(30));
+el("btn-save-settings").addEventListener("pointerdown", () => triggerVibration(12));
 el("btn-save-settings").addEventListener("click", () => {
   cfg.host = el("input-desk-address").value.trim();
   cfg.user = el("input-username").value.trim();

@@ -14,10 +14,38 @@ html, body {
 }
 
 body {
+  background-color: #030508 !important; /* deep rich OLED dark */
+  background-image: url('images/background.png') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
   padding-top: max(1rem, env(safe-area-inset-top));
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
+  position: relative;
+}
+
+/* Film Grain Texture Overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+}
+
+/* Background grid pattern */
+.bg-grid-overlay {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 50px 50px;
+  mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+  -webkit-mask-image: radial-gradient(circle at center, black 50%, transparent 100%);
+  position: absolute;
+  inset: 0;
 }
 
 .digital-font {
@@ -25,30 +53,153 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* 卡片容器：柔和圓角 + 內緣高光 + 帶色調的擴散陰影，取代單純平面邊框 */
+/* ==================== GLASSMORPHISM SINGLE-LAYER PANEL SYSTEM ==================== */
+
+/* Balanced Frosted Glass Panel */
 .panel-card {
-  background: #0f172a;
-  border: 1px solid rgba(51, 65, 85, 0.7);
-  border-radius: 1.5rem;
+  background: rgba(10, 14, 26, 0.62) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 1.75rem !important;
+  padding: 0 !important;
   box-shadow:
-    inset 0 1px 0 rgba(148, 163, 184, 0.05),
-    0 24px 40px -28px rgba(2, 6, 23, 0.9);
+    0 14px 36px -8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
 }
 
+/* Color accents on panel borders to indicate functionality */
 .height-card {
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(2, 6, 23, 0.98));
-  box-shadow:
-    inset 0 1px 0 rgba(148, 163, 184, 0.06),
-    0 24px 40px -28px rgba(2, 6, 23, 0.9);
+  background: linear-gradient(135deg, rgba(10, 14, 26, 0.68), rgba(47, 139, 255, 0.06)) !important;
+  border-color: rgba(47, 139, 255, 0.22) !important;
 }
 
-/* 主要動作按鈕：藍色調實色按鈕，取代純平面色塊 */
-.btn-accent {
-  background: linear-gradient(180deg, #3a93ff, #1c6fe0);
-  box-shadow: 0 12px 24px -12px rgba(47, 139, 255, 0.55);
+.panel-card:has(#schedule-toggle) {
+  background: linear-gradient(135deg, rgba(10, 14, 26, 0.68), rgba(16, 185, 129, 0.05)) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
 }
-.btn-accent:hover {
-  background: linear-gradient(180deg, #5da9ff, #2f8bff);
+
+/* Inner Core: transparent content wrapper without secondary glass borders */
+.inner-core {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  width: 100% !important;
+}
+
+/* ==================== PREMIUM CONTROLS & STATE ANIMATIONS ==================== */
+
+/* Buttons: Sleek Frosted Glass Plates with spring transitions */
+#btn-raise, #btn-lower, .preset-recall, .ghost-save-btn, #btn-request, #btn-save-settings, [onclick="switchView('settings')"] {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 4px 10px rgba(0, 0, 0, 0.15) !important;
+  transition: all 400ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border-radius: 1rem !important;
+}
+
+#btn-raise:hover, #btn-lower:hover, .preset-recall:hover, .ghost-save-btn:hover, #btn-request:hover, #btn-save-settings:hover, [onclick="switchView('settings')"]:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 8px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+#btn-raise:active, #btn-lower:active, .preset-recall:active, .ghost-save-btn:active, #btn-request:active, #btn-save-settings:active, [onclick="switchView('settings')"]:active {
+  transform: scale(0.96) translateY(0.5px) !important;
+  transition-duration: 80ms !important;
+}
+
+/* Back Button in Settings Navigation: Clean link style without box background or border */
+[onclick="switchView('control')"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Rise & Lower Button Accent States */
+#btn-raise:hover {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  background: rgba(16, 185, 129, 0.04) !important;
+}
+#btn-raise:active {
+  background: rgba(16, 185, 129, 0.12) !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+#btn-lower:hover {
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  background: rgba(244, 63, 94, 0.04) !important;
+}
+#btn-lower:active {
+  background: rgba(244, 63, 94, 0.12) !important;
+  border-color: rgba(244, 63, 94, 0.5) !important;
+  color: #f43f5e !important;
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.preset-recall:hover, .ghost-save-btn:hover {
+  border-color: rgba(47, 139, 255, 0.3) !important;
+  background: rgba(47, 139, 255, 0.04) !important;
+}
+.preset-recall:active, .ghost-save-btn:active {
+  background: rgba(47, 139, 255, 0.12) !important;
+  border-color: rgba(47, 139, 255, 0.5) !important;
+  color: #3a93ff !important;
+  box-shadow: 0 0 15px rgba(47, 139, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Save & Reconnect CTA Button (Accent glass style) */
+#btn-save-settings {
+  background: linear-gradient(180deg, rgba(58, 147, 255, 0.7), rgba(28, 111, 224, 0.7)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 24px -8px rgba(47, 139, 255, 0.4) !important;
+}
+#btn-save-settings:hover {
+  background: linear-gradient(180deg, rgba(93, 169, 255, 0.8), rgba(47, 139, 255, 0.8)) !important;
+  box-shadow: 0 12px 30px -6px rgba(47, 139, 255, 0.5) !important;
+  transform: translateY(-1.5px) !important;
+}
+
+/* Text and Password inputs styling */
+input[type="text"], input[type="password"] {
+  background: rgba(255, 255, 255, 0.015) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 1rem !important;
+  color: #e2e8f0 !important;
+  transition: all 300ms ease !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+input[type="text"]:focus, input[type="password"]:focus {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(59, 130, 246, 0.35) !important;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+  outline: none !important;
+}
+
+/* Toasts: Glass Frosted Toast Alerts */
+#toast-container > div {
+  background: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.4),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1) !important;
 }
 
 /* ------------------------------------------------------------------ */
@@ -56,56 +207,52 @@ body {
 /* ------------------------------------------------------------------ */
 
 @keyframes view-enter-kf {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .view-enter {
-  animation: view-enter-kf 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: view-enter-kf 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes card-enter-kf {
-  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 #control-view main > div,
 #settings-view main .panel-card {
-  animation: card-enter-kf 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: card-enter-kf 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-#control-view main > div:nth-child(1) { animation-delay: 20ms; }
-#control-view main > div:nth-child(2) { animation-delay: 70ms; }
-#control-view main > div:nth-child(3) { animation-delay: 120ms; }
+#control-view main > div:nth-child(1) { animation-delay: 40ms; }
+#control-view main > div:nth-child(2) { animation-delay: 100ms; }
+#control-view main > div:nth-child(3) { animation-delay: 160ms; }
 
-#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(1) { animation-delay: 20ms; }
-#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(2) { animation-delay: 70ms; }
-#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(1) { animation-delay: 120ms; }
-#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(2) { animation-delay: 170ms; }
+#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(1) { animation-delay: 40ms; }
+#settings-view main .grid:nth-of-type(1) .panel-card:nth-child(2) { animation-delay: 100ms; }
+#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(1) { animation-delay: 160ms; }
+#settings-view main .grid:nth-of-type(2) .panel-card:nth-child(2) { animation-delay: 220ms; }
 
 /* 連線指示燈：連線時呼吸脈動，斷線時靜止 */
 @keyframes status-breathe {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
-  50% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
 }
 
 .status-live {
-  animation: status-breathe 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: status-breathe 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-.height-card > * {
-  position: relative;
-  z-index: 1;
-}
-
-.height-readout {
-  min-height: 4.9rem;
-}
-
+/* Height Value Glow */
 .height-value {
+  color: #f8fafc;
   font-size: 4.5rem;
   line-height: 0.86;
   letter-spacing: 0;
+  text-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.1),
+    0 0 30px rgba(47, 139, 255, 0.2);
 }
 
 .height-unit {
@@ -125,8 +272,8 @@ body {
   position: absolute;
   inset: 0;
   background-image:
-    repeating-linear-gradient(to bottom, transparent 0 18px, rgba(47, 139, 255, 0.07) 18px 19px),
-    repeating-linear-gradient(to right, transparent 0 28px, rgba(47, 139, 255, 0.04) 28px 29px);
+    repeating-linear-gradient(to bottom, transparent 0 18px, rgba(47, 139, 255, 0.05) 18px 19px),
+    repeating-linear-gradient(to right, transparent 0 28px, rgba(47, 139, 255, 0.03) 28px 29px);
   mask-image: linear-gradient(to right, transparent, black 8%, black 94%, transparent);
 }
 
@@ -148,11 +295,12 @@ body {
 .height-history-line {
   fill: none;
   stroke: url(#height-line-gradient);
-  stroke-width: 2px;
+  stroke-width: 2.5px;
   vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   stroke-linejoin: round;
   transition: d 240ms ease;
+  filter: drop-shadow(0 2px 4px rgba(47, 139, 255, 0.35));
 }
 
 .height-history-dot {
@@ -183,14 +331,9 @@ body {
   display: none;
 }
 
-/* 針對直向模式強制提示橫置 */
-@media (orientation: portrait) {
-  .portrait-warning {
-    display: flex !important;
-  }
-}
 
-/* 扁平化滑桿樣式，去除發光陰影，並以 --fill 顯示已選取進度 */
+/* ==================== SLIDERS: GLASS STYLE ==================== */
+
 input[type=range] {
   --thumb-color: #2f8bff;
   --fill: 0%;
@@ -198,72 +341,113 @@ input[type=range] {
 input[type=range].range-brand { --thumb-color: #2f8bff; }
 input[type=range].range-emerald { --thumb-color: #10b981; }
 
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.05);
+  background-image: linear-gradient(var(--thumb-color), var(--thumb-color));
+  background-size: var(--fill) 100%;
+  background-repeat: no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 input[type=range]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 20px;
-  width: 20px;
+  height: 22px;
+  width: 22px;
   border-radius: 50%;
-  background: var(--thumb-color);
+  background: #ffffff;
   cursor: pointer;
-  border: 2px solid #ffffff;
-  margin-top: -7px;
-  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  margin-top: -8px;
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.5), 
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 150ms ease;
 }
+
 input[type=range]:active::-webkit-slider-thumb {
-  transform: scale(1.08);
+  transform: scale(1.15);
+  background-color: var(--thumb-color);
 }
+
+input[type=range]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
 input[type=range]::-moz-range-thumb {
   height: 20px;
   width: 20px;
   border-radius: 50%;
-  background: var(--thumb-color);
+  background: #ffffff;
   cursor: pointer;
-  border: 2px solid #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.5), 
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
-input[type=range]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 6px;
-  cursor: pointer;
-  border-radius: 3px;
-  background: linear-gradient(to right, var(--thumb-color) var(--fill), #1e293b var(--fill));
-}
-input[type=range]::-moz-range-track {
-  width: 100%;
-  height: 6px;
-  cursor: pointer;
-  background: #1e293b;
-  border-radius: 3px;
-}
+
 input[type=range]::-moz-range-progress {
-  height: 6px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 999px;
   background: var(--thumb-color);
+}
+
+/* ==================== MESH ORB ANIMATION KEYFRAMES ==================== */
+@keyframes breathe-orb-1-kf {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.8; }
+  50% { transform: scale(1.1) translate(20px, 30px); opacity: 1; }
+}
+@keyframes breathe-orb-2-kf {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.7; }
+  50% { transform: scale(1.15) translate(-30px, 10px); opacity: 0.9; }
+}
+@keyframes breathe-orb-3-kf {
+  0%, 100% { transform: scale(1) translate(0, 0); opacity: 0.6; }
+  50% { transform: scale(1.08) translate(15px, -20px); opacity: 0.85; }
+}
+.animate-breathe-orb-1 {
+  animation: breathe-orb-1-kf 12s ease-in-out infinite;
+}
+.animate-breathe-orb-2 {
+  animation: breathe-orb-2-kf 18s ease-in-out infinite;
+}
+.animate-breathe-orb-3 {
+  animation: breathe-orb-3-kf 15s ease-in-out infinite;
 }
 
 /* 行動裝置橫置極窄螢幕優化 (當螢幕高度小於 400px 時，縮減外邊距與間距，以釋放空間給圖表，使其高度能維持在 5.0rem) */
 @media (max-height: 400px) {
-  /* 1. 縮減主畫面外邊距 */
   body {
-    padding: 0.5rem !important; /* 原本是 1rem (p-4) */
+    padding: 0.5rem !important;
   }
 
-  /* 2. 縮減網格卡片之間的間距 */
   #control-view main {
-    gap: 0.75rem !important; /* 原本是 1rem (gap-4) */
+    gap: 0.75rem !important;
   }
 
-  /* 3. 縮減卡片內部邊距 */
-  .panel-card, .height-card {
-    padding: 0.75rem !important; /* 原本是 1rem (p-4) */
+  /* Adjust card padding and radius in landscape tight spaces */
+  .panel-card {
+    border-radius: 1.25rem !important;
+  }
+  
+  .inner-core {
+    padding: 0.75rem !important;
   }
 
-  /* 4. 縮小標題下方的間距 */
   #control-view main .mb-3 {
-    margin-bottom: 0.5rem !important; /* 原本是 0.75rem (mb-3) */
+    margin-bottom: 0.5rem !important;
   }
 
-  /* 5. 圖表高度可以維持在較高的 5.0rem */
   .height-record {
-    height: 5.0rem !important; /* 原本是 5.8rem，極限高度下壓縮至 5.0rem */
+    height: 5.0rem !important;
   }
 }
